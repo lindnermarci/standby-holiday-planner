@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm create:*)",
+      "Bash(npx --yes create-vite@latest . --template react)",
+      "Bash(\"/c/Program Files/nodejs/npm.cmd\" install react-leaflet@4 leaflet)"
+    ]
+  }
+}
