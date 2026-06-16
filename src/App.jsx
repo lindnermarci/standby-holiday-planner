@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useAuth } from './hooks/useAuth'
+import { useCloudSync } from './hooks/useCloudSync'
 import { DEFAULT_SYSTEM_PROMPT } from './utils/gemini'
 import {
   DAILY_EXPLORER_SYSTEM_PROMPT,
@@ -11,6 +13,7 @@ import FlightSandbox from './components/FlightSandbox'
 import TripIdeation from './components/TripIdeation'
 import PanicSheet from './components/PanicSheet'
 import SettingsModal from './components/SettingsModal'
+import AuthModal from './components/AuthModal'
 import DailyExplorer from './components/DailyExplorer'
 import TripPlanner from './components/TripPlanner'
 import TravelChat from './components/TravelChat'
@@ -26,15 +29,38 @@ const TABS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('explorer')
+
+  // Synced data (these 5 keys go to Supabase)
   const [flights, setFlights] = useLocalStorage('sbp_flights', [])
   const [tripIdeas, setTripIdeas] = useLocalStorage('sbp_trip_ideas', [])
+  const [savedItineraries, setSavedItineraries] = useLocalStorage('sbp_itineraries', [])
+  const [savedExplorations, setSavedExplorations] = useLocalStorage('sbp_saved_explorations', [])
+  const [chatMessages, setChatMessages] = useLocalStorage('sbp_chat_messages', [])
+
+  // Device-local (API key and prompts stay on-device)
   const [apiKey, setApiKey] = useLocalStorage('sbp_gemini_key', '')
   const [systemPrompt, setSystemPrompt] = useLocalStorage('sbp_gemini_prompt', DEFAULT_SYSTEM_PROMPT)
   const [explorerPrompt, setExplorerPrompt] = useLocalStorage('sbp_prompt_explorer', DAILY_EXPLORER_SYSTEM_PROMPT)
   const [dayPlanPrompt, setDayPlanPrompt] = useLocalStorage('sbp_prompt_dayplan', DAILY_PLAN_SYSTEM_PROMPT)
   const [plannerPrompt, setPlannerPrompt] = useLocalStorage('sbp_prompt_planner', TRIP_PLANNER_SYSTEM_PROMPT)
   const [chatPrompt, setChatPrompt] = useLocalStorage('sbp_prompt_chat', TRAVEL_CHAT_SYSTEM_PROMPT)
+
+  // Auth
+  const { user, isAuthenticated, loading: authLoading, sendMagicLink, signOut } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [migrationToast, setMigrationToast] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+
+  // Cloud sync — pull on login, push on data changes
+  useCloudSync({
+    userId: user?.id ?? null,
+    data: { flights, tripIdeas, itineraries: savedItineraries, savedExplorations, chatMessages },
+    setters: { setFlights, setTripIdeas, setSavedItineraries, setSavedExplorations, setChatMessages },
+    onMigrationComplete: () => {
+      setMigrationToast(true)
+      setTimeout(() => setMigrationToast(false), 4000)
+    },
+  })
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -51,9 +77,32 @@ export default function App() {
             </div>
             <div className="flex items-center gap-2">
               <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 bg-klm-mid/30 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
-                Offline-ready
+                <span className={`w-1.5 h-1.5 rounded-full inline-block ${isAuthenticated ? 'bg-klm-blue' : 'bg-emerald-400 animate-pulse'}`}></span>
+                {isAuthenticated ? 'Syncing' : 'Offline-ready'}
               </div>
+
+              {/* Auth button */}
+              {!authLoading && (
+                isAuthenticated ? (
+                  <div className="flex items-center gap-2">
+                    <span className="hidden sm:inline text-xs text-slate-400 truncate max-w-[140px]" title={user.email}>{user.email}</span>
+                    <button
+                      onClick={signOut}
+                      className="text-xs px-3 py-1.5 rounded-full bg-slate-500/20 text-slate-300 hover:bg-slate-500/30 font-semibold transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="text-xs px-3 py-1.5 rounded-full bg-klm-blue/80 text-white hover:bg-klm-blue font-semibold transition-colors"
+                  >
+                    Sign in
+                  </button>
+                )
+              )}
+
               <button
                 onClick={() => setShowSettings(true)}
                 className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold transition-colors ${
@@ -107,11 +156,19 @@ export default function App() {
             explorerPrompt={explorerPrompt}
             dayPlanPrompt={dayPlanPrompt}
             onOpenSettings={() => setShowSettings(true)}
+            savedPlans={savedExplorations}
+            setSavedPlans={setSavedExplorations}
           />
         )}
         {activeTab === 'planner' && (
           <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-6">
-            <TripPlanner apiKey={apiKey} plannerPrompt={plannerPrompt} onOpenSettings={() => setShowSettings(true)} />
+            <TripPlanner
+              apiKey={apiKey}
+              plannerPrompt={plannerPrompt}
+              onOpenSettings={() => setShowSettings(true)}
+              savedItineraries={savedItineraries}
+              setSavedItineraries={setSavedItineraries}
+            />
           </div>
         )}
         {activeTab === 'chat' && (
@@ -120,6 +177,8 @@ export default function App() {
             chatPrompt={chatPrompt}
             tripIdeas={tripIdeas}
             onOpenSettings={() => setShowSettings(true)}
+            messages={chatMessages}
+            setMessages={setChatMessages}
           />
         )}
         {activeTab === 'sandbox' && (
@@ -143,7 +202,7 @@ export default function App() {
       {/* Footer — hidden on immersive tabs */}
       {!['explorer', 'chat'].includes(activeTab) && (
         <footer className="text-center text-xs text-slate-400 py-3 border-t border-slate-200 bg-white flex-shrink-0">
-          Standby Planner · Powered by Gemini · All data local · Non-rev use only
+          Standby Planner · Powered by Gemini · Non-rev use only
         </footer>
       )}
 
@@ -164,6 +223,22 @@ export default function App() {
           setChatPrompt={setChatPrompt}
           onClose={() => setShowSettings(false)}
         />
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          onSendMagicLink={sendMagicLink}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
+
+      {/* Migration toast */}
+      {migrationToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-klm-dark text-white text-sm px-5 py-3 rounded-xl shadow-xl flex items-center gap-2">
+          <span>☁️</span>
+          <span>Your local data has been backed up to your account.</span>
+        </div>
       )}
     </div>
   )

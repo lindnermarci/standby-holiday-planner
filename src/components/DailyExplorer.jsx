@@ -1,7 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
 import { askGeminiStructured, askGemini } from '../utils/gemini'
 import { geocodePlaces, geocodePlace } from '../utils/geocode'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import MarkdownResponse from './MarkdownResponse'
 
 // Lazy-load the map so Leaflet doesn't block initial render
@@ -141,7 +140,7 @@ function ActivityCard({ activity, index, focused, onClick }) {
   )
 }
 
-export default function DailyExplorer({ apiKey, explorerPrompt, dayPlanPrompt, onOpenSettings }) {
+export default function DailyExplorer({ apiKey, explorerPrompt, dayPlanPrompt, onOpenSettings, savedPlans, setSavedPlans }) {
   const [location, setLocation] = useState('')
   const [selectedVibes, setSelectedVibes] = useState([])
   const [duration, setDuration] = useState('halfday')
@@ -159,7 +158,6 @@ export default function DailyExplorer({ apiKey, explorerPrompt, dayPlanPrompt, o
   const [dayPlanLoading, setDayPlanLoading] = useState(false)
   const [dayPlan, setDayPlan] = useState(null)
 
-  const [savedPlans, setSavedPlans] = useLocalStorage('sbp_saved_explorations', [])
 
   const toggleVibe = (id) =>
     setSelectedVibes((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id])

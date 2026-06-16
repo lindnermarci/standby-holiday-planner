@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { askGemini } from '../utils/gemini'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import MarkdownResponse from './MarkdownResponse'
 
 const TRAVEL_STYLES = [
@@ -46,12 +45,11 @@ function SavedItineraryCard({ plan, onLoad, onDelete }) {
   )
 }
 
-export default function TripPlanner({ apiKey, plannerPrompt, onOpenSettings }) {
+export default function TripPlanner({ apiKey, plannerPrompt, onOpenSettings, savedItineraries, setSavedItineraries }) {
   const [form, setForm] = useState({ ...EMPTY_FORM })
   const [loading, setLoading] = useState(false)
   const [itinerary, setItinerary] = useState(null)
   const [error, setError] = useState(null)
-  const [savedItineraries, setSavedItineraries] = useLocalStorage('sbp_itineraries', [])
   const [showSaved, setShowSaved] = useState(false)
 
   const toggleStyle = (id) =>

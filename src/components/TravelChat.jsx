@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
 import { askGeminiChat } from '../utils/gemini'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import MarkdownResponse from './MarkdownResponse'
 
 const QUICK_PROMPTS = [
@@ -66,8 +65,7 @@ function Message({ msg }) {
   )
 }
 
-export default function TravelChat({ apiKey, chatPrompt, tripIdeas, onOpenSettings }) {
-  const [messages, setMessages] = useLocalStorage('sbp_chat_messages', [])
+export default function TravelChat({ apiKey, chatPrompt, tripIdeas, onOpenSettings, messages, setMessages }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [contextTripId, setContextTripId] = useState('')
