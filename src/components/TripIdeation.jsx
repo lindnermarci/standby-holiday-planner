@@ -242,6 +242,14 @@ function IdeaCard({ idea, allFlights, onDelete, onUpdate, apiKey, systemPrompt, 
             apiKey={apiKey}
             systemPrompt={systemPrompt}
             onOpenSettings={onOpenSettings}
+            savedResponse={idea.savedResponse ?? null}
+            savedResponseAt={idea.savedResponseAt ?? null}
+            onSaveResponse={(text) =>
+              onUpdate(idea.id, {
+                savedResponse: text,
+                savedResponseAt: text ? new Date().toISOString() : null,
+              })
+            }
           />
 
           <div className="flex gap-2 pt-1">

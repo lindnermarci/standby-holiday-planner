@@ -13,12 +13,13 @@ import MarkdownResponse from './MarkdownResponse'
  *  systemPrompt — the editable system context from localStorage
  *  onOpenSettings — callback to open the settings modal
  */
-export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPrompt, onOpenSettings }) {
+export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPrompt, onOpenSettings, savedResponse, savedResponseAt, onSaveResponse }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState(null)
   const [error, setError] = useState(null)
   const [showPromptPreview, setShowPromptPreview] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const userMessage = buildTripPrompt(idea, linkedFlights)
 
@@ -36,6 +37,7 @@ export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPromp
     setLoading(true)
     setError(null)
     setResponse(null)
+    setSaved(false)
     try {
       const text = await askGemini(apiKey, systemPrompt, userMessage)
       setResponse(text)
@@ -44,6 +46,15 @@ export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPromp
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSave = () => {
+    onSaveResponse(response)
+    setSaved(true)
+  }
+
+  const handleClearSaved = () => {
+    onSaveResponse(null)
   }
 
   const handleToggle = () => {
@@ -63,6 +74,11 @@ export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPromp
           {response && !open && (
             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
               Response ready
+            </span>
+          )}
+          {savedResponse && !response && !open && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+              Saved response
             </span>
           )}
           {!hasApiKey && (
@@ -173,7 +189,7 @@ export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPromp
             </div>
           )}
 
-          {/* Response */}
+          {/* Fresh response */}
           {response && !loading && (
             <div className="bg-white border border-purple-100 rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-purple-100">
@@ -182,9 +198,45 @@ export default function GeminiAdvisor({ idea, linkedFlights, apiKey, systemPromp
                 <span className="ml-auto text-xs text-slate-400">for "{idea.name}"</span>
               </div>
               <MarkdownResponse text={response} />
-              <p className="text-xs text-slate-400 mt-4 pt-3 border-t border-slate-100 italic">
-                AI-generated advice — always verify seat data and conditions at the gate.
-              </p>
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                <p className="text-xs text-slate-400 italic">
+                  AI-generated advice — always verify seat data and conditions at the gate.
+                </p>
+                <button
+                  onClick={handleSave}
+                  disabled={saved}
+                  className="flex-shrink-0 ml-3 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:cursor-default
+                    bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 disabled:opacity-60"
+                >
+                  {saved ? '✓ Saved' : 'Save for later'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Saved response (shown when no fresh response in this session) */}
+          {savedResponse && !response && !loading && (
+            <div className="bg-white border border-green-200 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-green-100">
+                <span className="text-base">📌</span>
+                <span className="text-xs font-bold text-green-700 uppercase tracking-wide">Saved AI Response</span>
+                {savedResponseAt && (
+                  <span className="ml-auto text-xs text-slate-400">
+                    saved {new Date(savedResponseAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
+              <MarkdownResponse text={savedResponse} />
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                <p className="text-xs text-slate-400 italic">This is a previously saved response. Ask again to refresh.</p>
+                <button
+                  onClick={handleClearSaved}
+                  className="flex-shrink-0 ml-3 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors
+                    bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                >
+                  Clear saved
+                </button>
+              </div>
             </div>
           )}
         </div>
