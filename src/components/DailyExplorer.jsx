@@ -253,16 +253,16 @@ export default function DailyExplorer({ apiKey, explorerPrompt, dayPlanPrompt, o
   const hasResults = activities.length > 0
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-col lg:flex-1 lg:overflow-hidden">
       {/* Hero greeting bar */}
-      <div className="bg-gradient-to-r from-klm-dark via-klm-mid to-klm-blue text-white px-6 py-5 flex-shrink-0">
+      <div className="bg-gradient-to-r from-klm-dark via-klm-mid to-klm-blue text-white px-4 py-3 lg:px-6 lg:py-5 flex-shrink-0">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <h2 className="text-2xl font-black tracking-tight">
+              <h2 className="text-lg lg:text-2xl font-black tracking-tight">
                 {greeting()}, traveller ✈️
               </h2>
-              <p className="text-klm-light/80 text-sm mt-0.5">{todayFormatted()} · Where does today take you?</p>
+              <p className="text-klm-light/80 text-xs lg:text-sm mt-0.5">{todayFormatted()} · Where does today take you?</p>
             </div>
             {savedPlans.length > 0 && (
               <div className="flex items-center gap-2">
@@ -286,11 +286,11 @@ export default function DailyExplorer({ apiKey, explorerPrompt, dayPlanPrompt, o
       </div>
 
       {/* Main layout: sidebar + map */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex flex-col lg:flex-1 lg:flex-row lg:overflow-hidden">
 
         {/* LEFT: Input panel */}
-        <div className="lg:w-96 lg:flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden max-h-[50vh] lg:max-h-none">
-          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="lg:w-96 lg:flex-shrink-0 bg-white border-r border-slate-200 flex flex-col lg:overflow-hidden">
+          <div className="p-5 space-y-5 lg:flex-1 lg:overflow-y-auto">
 
             {/* API key warning */}
             {!apiKey?.trim() && (
@@ -467,7 +467,7 @@ export default function DailyExplorer({ apiKey, explorerPrompt, dayPlanPrompt, o
         </div>
 
         {/* RIGHT: Map */}
-        <div className="flex-1 relative min-h-[350px] bg-slate-100 overflow-hidden">
+        <div className="relative h-[300px] lg:flex-1 lg:h-auto bg-slate-100 overflow-hidden">
           {!hasResults && !loading && !geocoding && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 pointer-events-none">
               <div className="text-6xl mb-3">🗺️</div>

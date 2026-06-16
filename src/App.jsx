@@ -100,7 +100,7 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main className={`flex-1 ${activeTab === 'explorer' ? 'flex flex-col overflow-hidden' : activeTab === 'chat' ? '' : 'max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-6'}`}>
+      <main className={`flex-1 ${activeTab === 'explorer' ? 'flex flex-col lg:overflow-hidden' : activeTab === 'chat' ? '' : 'max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-6'}`}>
         {activeTab === 'explorer' && (
           <DailyExplorer
             apiKey={apiKey}
