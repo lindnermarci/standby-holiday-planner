@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { useEncryptedApiKey } from './hooks/useEncryptedApiKey'
 import { useAuth } from './hooks/useAuth'
 import { useCloudSync } from './hooks/useCloudSync'
 import { DEFAULT_SYSTEM_PROMPT } from './utils/gemini'
@@ -37,8 +38,8 @@ export default function App() {
   const [savedExplorations, setSavedExplorations] = useLocalStorage('sbp_saved_explorations', [])
   const [chatMessages, setChatMessages] = useLocalStorage('sbp_chat_messages', [])
 
-  // Device-local (API key and prompts stay on-device)
-  const [apiKey, setApiKey] = useLocalStorage('sbp_gemini_key', '')
+  // API key is AES-GCM encrypted in localStorage (CryptoKey held in IndexedDB)
+  const [apiKey, setApiKey] = useEncryptedApiKey()
   const [systemPrompt, setSystemPrompt] = useLocalStorage('sbp_gemini_prompt', DEFAULT_SYSTEM_PROMPT)
   const [explorerPrompt, setExplorerPrompt] = useLocalStorage('sbp_prompt_explorer', DAILY_EXPLORER_SYSTEM_PROMPT)
   const [dayPlanPrompt, setDayPlanPrompt] = useLocalStorage('sbp_prompt_dayplan', DAILY_PLAN_SYSTEM_PROMPT)

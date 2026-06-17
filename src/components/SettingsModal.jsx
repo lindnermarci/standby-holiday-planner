@@ -133,8 +133,8 @@ export default function SettingsModal({
               </button>
             </div>
             <p className="text-xs text-slate-400 mt-1.5">
-              Stored only in this browser's localStorage — sent directly to Google's Gemini API only.
-              Get a free key at{' '}
+              Encrypted with AES-256-GCM before storage. The encryption key never leaves your browser.
+              Sent directly to Google's Gemini API only. Get a free key at{' '}
               <span className="text-klm-blue font-medium">aistudio.google.com</span>.
             </p>
           </div>

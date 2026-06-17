@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../utils/supabase'
+import { encryptForCloud, decryptFromCloud } from '../utils/crypto'
 
 const SYNC_KEYS = [
   'sbp_flights',
@@ -17,16 +18,9 @@ const KEY_TO_COLUMN = {
   sbp_chat_messages:      'chat_messages',
 }
 
-// Simple XOR obfuscation — not cryptographic, but prevents plaintext key
-// from being trivially readable in DB snapshots or logs.
-function obfuscate(str, secret) {
-  if (!str) return ''
-  return btoa(str.split('').map((c, i) =>
-    String.fromCharCode(c.charCodeAt(0) ^ secret.charCodeAt(i % secret.length))
-  ).join(''))
-}
-
-function deobfuscate(encoded, secret) {
+// Legacy XOR deobfuscation — used only to migrate values written before AES-GCM
+// was introduced. Remove once all users have been migrated.
+function legacyDeobfuscate(encoded, secret) {
   if (!encoded) return ''
   try {
     const str = atob(encoded)
@@ -34,6 +28,16 @@ function deobfuscate(encoded, secret) {
       String.fromCharCode(c.charCodeAt(0) ^ secret.charCodeAt(i % secret.length))
     ).join('')
   } catch { return '' }
+}
+
+async function safeDecryptFromCloud(value, userId) {
+  try {
+    return await decryptFromCloud(value, userId)
+  } catch {
+    // Value was written by the old XOR obfuscation — migrate it.
+    const secret = userId.slice(0, 16).padEnd(16, '0')
+    return legacyDeobfuscate(value, secret)
+  }
 }
 
 const DEBOUNCE_MS = 500
@@ -69,9 +73,6 @@ export function useCloudSync({ userId, data, setters, onMigrationComplete }) {
 
         if (error) throw error
 
-        // Secret used to obfuscate the API key in the DB — derived from userId
-        const secret = userId.slice(0, 16).padEnd(16, '0')
-
         if (!row) {
           // First login — check if localStorage has data worth migrating
           const hasLocalData = SYNC_KEYS.some((key) => {
@@ -90,7 +91,7 @@ export function useCloudSync({ userId, data, setters, onMigrationComplete }) {
                 payload[KEY_TO_COLUMN[key]] = JSON.parse(localStorage.getItem(key) || '[]')
               } catch { payload[KEY_TO_COLUMN[key]] = [] }
             })
-            if (localApiKey) payload.gemini_key = obfuscate(localApiKey, secret)
+            if (localApiKey) payload.gemini_key = await encryptForCloud(localApiKey, userId)
             await supabase.from('user_data').upsert(payload, { onConflict: 'user_id' })
             if (hasLocalData) onMigrationComplete?.()
           }
@@ -109,13 +110,13 @@ export function useCloudSync({ userId, data, setters, onMigrationComplete }) {
           })
           // Restore API key from cloud if local is empty
           if (row.gemini_key && !data.apiKey) {
-            const restored = deobfuscate(row.gemini_key, secret)
+            const restored = await safeDecryptFromCloud(row.gemini_key, userId)
             if (restored) setters.setApiKey?.(restored)
           }
           // Push local key to cloud if cloud has none
           if (!row.gemini_key && data.apiKey) {
             await supabase.from('user_data').upsert(
-              { user_id: userId, gemini_key: obfuscate(data.apiKey, secret) },
+              { user_id: userId, gemini_key: await encryptForCloud(data.apiKey, userId) },
               { onConflict: 'user_id' }
             )
           }
@@ -135,7 +136,6 @@ export function useCloudSync({ userId, data, setters, onMigrationComplete }) {
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const secret = userId.slice(0, 16).padEnd(16, '0')
         await supabase.from('user_data').upsert({
           user_id:            userId,
           flights:            data.flights,
@@ -143,7 +143,7 @@ export function useCloudSync({ userId, data, setters, onMigrationComplete }) {
           itineraries:        data.itineraries,
           saved_explorations: data.savedExplorations,
           chat_messages:      data.chatMessages,
-          gemini_key:         data.apiKey ? obfuscate(data.apiKey, secret) : null,
+          gemini_key:         data.apiKey ? await encryptForCloud(data.apiKey, userId) : null,
         }, { onConflict: 'user_id' })
       } catch (err) {
         console.warn('Cloud sync push failed:', err.message)
