@@ -54,8 +54,8 @@ export default function App() {
   // Cloud sync — pull on login, push on data changes
   useCloudSync({
     userId: user?.id ?? null,
-    data: { flights, tripIdeas, itineraries: savedItineraries, savedExplorations, chatMessages },
-    setters: { setFlights, setTripIdeas, setSavedItineraries, setSavedExplorations, setChatMessages },
+    data: { flights, tripIdeas, itineraries: savedItineraries, savedExplorations, chatMessages, apiKey },
+    setters: { setFlights, setTripIdeas, setSavedItineraries, setSavedExplorations, setChatMessages, setApiKey },
     onMigrationComplete: () => {
       setMigrationToast(true)
       setTimeout(() => setMigrationToast(false), 4000)
