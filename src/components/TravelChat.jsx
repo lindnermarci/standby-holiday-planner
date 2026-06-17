@@ -136,39 +136,41 @@ export default function TravelChat({ apiKey, chatPrompt, tripIdeas, onOpenSettin
   }
 
   return (
-    <div className="flex flex-col -mx-4 sm:-mx-6 -mt-6" style={{ height: 'calc(100vh - 130px)' }}>
+    <div className="flex flex-col" style={{ height: 'calc(100svh - 100px)' }}>
       {/* Chat header */}
-      <div className="bg-gradient-to-r from-klm-dark to-klm-mid text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-xl">✨</div>
-          <div>
-            <h2 className="font-black text-base">Scout — Travel Companion</h2>
-            <p className="text-xs text-white/70">Ask anything about travel · Context-aware · Remembers this session</p>
+      <div className="bg-gradient-to-r from-klm-dark to-klm-mid text-white px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">✨</div>
+            <div className="min-w-0">
+              <h2 className="font-black text-sm sm:text-base leading-tight">Scout — Travel Companion</h2>
+              <p className="text-xs text-white/60 hidden sm:block">Ask anything about travel · Context-aware · Remembers this session</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {tripIdeas?.length > 0 && (
-            <select
-              className="text-xs bg-white/10 border border-white/20 text-white rounded-lg px-2 py-1.5 focus:outline-none"
-              value={contextTripId}
-              onChange={(e) => setContextTripId(e.target.value)}
-              title="Give Scout context about a trip"
-            >
-              <option value="">🗺️ No trip context</option>
-              {tripIdeas.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          )}
-          {messages.length > 0 && (
-            <button
-              onClick={handleClear}
-              className="text-white/60 hover:text-white text-xs px-2 py-1 rounded transition-colors"
-              title="Clear chat"
-            >
-              🗑️
-            </button>
-          )}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {tripIdeas?.length > 0 && (
+              <select
+                className="text-xs bg-white/10 border border-white/20 text-white rounded-lg px-2 py-1.5 focus:outline-none max-w-[140px] sm:max-w-none"
+                value={contextTripId}
+                onChange={(e) => setContextTripId(e.target.value)}
+                title="Give Scout context about a trip"
+              >
+                <option value="">🗺️ No context</option>
+                {tripIdeas.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            )}
+            {messages.length > 0 && (
+              <button
+                onClick={handleClear}
+                className="text-white/60 hover:text-white text-xs px-2 py-1 rounded transition-colors"
+                title="Clear chat"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -219,7 +221,7 @@ export default function TravelChat({ apiKey, chatPrompt, tripIdeas, onOpenSettin
 
       {/* Quick prompts row (shown when there are messages) */}
       {messages.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto px-4 sm:px-6 py-2 bg-white border-t border-slate-100 flex-shrink-0 scrollbar-thin">
+        <div className="flex gap-2 overflow-x-auto px-3 sm:px-6 py-2 bg-white border-t border-slate-100 flex-shrink-0 scrollbar-thin">
           {QUICK_PROMPTS.map((p) => (
             <button
               key={p.label}
@@ -236,14 +238,14 @@ export default function TravelChat({ apiKey, chatPrompt, tripIdeas, onOpenSettin
       {/* Input form */}
       <form
         onSubmit={handleSubmit}
-        className="flex-shrink-0 border-t border-slate-200 bg-white px-4 sm:px-6 py-4 flex gap-3 items-end"
+        className="flex-shrink-0 border-t border-slate-200 bg-white px-3 sm:px-6 py-3 sm:py-4 flex gap-2 sm:gap-3 items-end"
       >
         <div className="flex-1 relative">
           <textarea
             ref={inputRef}
             rows={1}
-            className="input resize-none overflow-hidden pr-4 leading-relaxed"
-            placeholder="Ask me anything about travel… (Enter to send, Shift+Enter for new line)"
+            className="input resize-none overflow-hidden pr-4 leading-relaxed text-sm"
+            placeholder="Ask about travel…"
             value={input}
             onChange={(e) => {
               setInput(e.target.value)
